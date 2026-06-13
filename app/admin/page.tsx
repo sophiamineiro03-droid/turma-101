@@ -348,39 +348,41 @@ export default function AdminPage() {
                 <div className="participant-list">
                   {payload.participants.map((participant) => (
                     <div className="participant-card" key={participant.id}>
-                      <div className="participant-info">
-                        <strong>{participant.name}</strong>
-                        <span>{participant.email}</span>
-                        <span className={`status-pill ${pixClass(participant.pix_status)}`}>
+                      <div className="participant-card-top">
+                        <div className="participant-info">
+                          <strong>{participant.name}</strong>
+                          <span>{participant.email}</span>
+                        </div>
+                        <span className={`status-pill status-pill-sm ${pixClass(participant.pix_status)}`}>
                           {pixLabel(participant.pix_status)}
                         </span>
                       </div>
                       <div className="admin-actions">
                         <button
-                          className="primary-button"
+                          className="action-btn-sm primary-button"
                           disabled={busy}
                           onClick={() => updateParticipant(participant.id, "confirmed")}
                           type="button"
                         >
-                          <UserCheck size={16} />
+                          <UserCheck size={14} />
                           Confirmar
                         </button>
                         <button
-                          className="secondary-button"
+                          className="action-btn-sm secondary-button"
                           disabled={busy}
                           onClick={() => updateParticipant(participant.id, "pending")}
                           type="button"
                         >
-                          <TimerReset size={16} />
+                          <TimerReset size={14} />
                           Pendente
                         </button>
                         <button
-                          className="danger-button"
+                          className="action-btn-sm danger-button"
                           disabled={busy}
                           onClick={() => updateParticipant(participant.id, "rejected")}
                           type="button"
                         >
-                          <XCircle size={16} />
+                          <XCircle size={14} />
                           Recusar
                         </button>
                       </div>

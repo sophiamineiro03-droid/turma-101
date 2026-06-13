@@ -889,28 +889,46 @@ td {
 
 .participant-card {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 12px;
   padding: 14px 16px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--canvas);
-  flex-wrap: wrap;
+}
+
+.participant-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .participant-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--muted);
 }
 
 .participant-info strong {
   color: var(--ink);
   font-size: 15px;
+}
+
+.status-pill-sm {
+  font-size: 11px !important;
+  min-height: 26px !important;
+  padding: 0 9px !important;
+  white-space: nowrap;
+}
+
+.action-btn-sm {
+  min-height: 34px !important;
+  padding: 0 12px !important;
+  font-size: 13px !important;
 }
 
 .admin-actions {
