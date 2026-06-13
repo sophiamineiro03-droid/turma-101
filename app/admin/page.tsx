@@ -271,8 +271,7 @@ export default function AdminPage() {
                   <p className="section-kicker">Acesso restrito</p>
                   <h1 className="section-title">Entrar no painel administrativo</h1>
                   <p className="section-subtitle">
-                    Use a senha definida em <strong>ADMIN_PASSWORD</strong> na Vercel para confirmar
-                    pagamentos e cadastrar resultados.
+                    Acesso exclusivo da organização para confirmar pagamentos e cadastrar resultados.
                   </p>
                 </div>
               </div>
