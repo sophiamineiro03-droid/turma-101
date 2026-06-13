@@ -345,63 +345,47 @@ export default function AdminPage() {
                   <strong>Nenhum inscrito ainda.</strong>
                 </div>
               ) : (
-                <div className="table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Nome</th>
-                        <th>E-mail</th>
-                        <th>Status</th>
-                        <th>Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {payload.participants.map((participant) => (
-                        <tr key={participant.id}>
-                          <td>
-                            <strong>{participant.name}</strong>
-                          </td>
-                          <td>{participant.email}</td>
-                          <td>
-                            <span className={`status-pill ${pixClass(participant.pix_status)}`}>
-                              {pixLabel(participant.pix_status)}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="admin-actions">
-                              <button
-                                className="primary-button"
-                                disabled={busy}
-                                onClick={() => updateParticipant(participant.id, "confirmed")}
-                                type="button"
-                              >
-                                <UserCheck size={16} />
-                                Confirmar
-                              </button>
-                              <button
-                                className="secondary-button"
-                                disabled={busy}
-                                onClick={() => updateParticipant(participant.id, "pending")}
-                                type="button"
-                              >
-                                <TimerReset size={16} />
-                                Pendente
-                              </button>
-                              <button
-                                className="danger-button"
-                                disabled={busy}
-                                onClick={() => updateParticipant(participant.id, "rejected")}
-                                type="button"
-                              >
-                                <XCircle size={16} />
-                                Recusar
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="participant-list">
+                  {payload.participants.map((participant) => (
+                    <div className="participant-card" key={participant.id}>
+                      <div className="participant-info">
+                        <strong>{participant.name}</strong>
+                        <span>{participant.email}</span>
+                        <span className={`status-pill ${pixClass(participant.pix_status)}`}>
+                          {pixLabel(participant.pix_status)}
+                        </span>
+                      </div>
+                      <div className="admin-actions">
+                        <button
+                          className="primary-button"
+                          disabled={busy}
+                          onClick={() => updateParticipant(participant.id, "confirmed")}
+                          type="button"
+                        >
+                          <UserCheck size={16} />
+                          Confirmar
+                        </button>
+                        <button
+                          className="secondary-button"
+                          disabled={busy}
+                          onClick={() => updateParticipant(participant.id, "pending")}
+                          type="button"
+                        >
+                          <TimerReset size={16} />
+                          Pendente
+                        </button>
+                        <button
+                          className="danger-button"
+                          disabled={busy}
+                          onClick={() => updateParticipant(participant.id, "rejected")}
+                          type="button"
+                        >
+                          <XCircle size={16} />
+                          Recusar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

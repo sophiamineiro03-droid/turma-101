@@ -881,6 +881,38 @@ td {
   gap: 18px;
 }
 
+.participant-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.participant-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--canvas);
+  flex-wrap: wrap;
+}
+
+.participant-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.participant-info strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+
 .admin-actions {
   display: flex;
   flex-wrap: wrap;
