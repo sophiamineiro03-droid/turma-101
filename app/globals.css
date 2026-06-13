@@ -1257,8 +1257,9 @@ td {
   .match-head {
     align-items: center;
     flex-direction: row;
-    gap: 8px;
-    padding: 10px 12px;
+    gap: 6px;
+    min-height: 44px;
+    padding: 6px 8px;
   }
 
   .match-round,
@@ -1267,13 +1268,22 @@ td {
   }
 
   .match-round {
-    font-size: 11px;
+    gap: 4px;
+    min-width: 0;
+    font-size: 10px;
+    line-height: 1.15;
   }
 
   .match-head .status-pill {
-    min-height: 32px;
-    padding: 0 10px;
-    font-size: 10px;
+    gap: 4px;
+    min-height: 28px;
+    max-width: 128px;
+    padding: 0 8px;
+    font-size: 9px;
+    line-height: 1.05;
+    white-space: normal;
+    text-align: center;
+    flex: 0 0 auto;
   }
 
   .match-body {

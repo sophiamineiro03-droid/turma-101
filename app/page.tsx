@@ -609,13 +609,6 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="notice block-notice">
-                <Coins size={18} />
-                <span>
-                  O Pix é obrigatório. A inscrição só entra na disputa quando a organização
-                  confirmar o pagamento da chave <strong>{PIX_KEY}</strong>.
-                </span>
-              </div>
             </section>
 
             <section className="panel" id="palpites">
