@@ -326,6 +326,11 @@ a {
   padding: 0 13px;
 }
 
+.field select {
+  padding-right: 32px;
+  appearance: auto;
+}
+
 .field input:focus,
 .field select:focus,
 .score-input:focus {
