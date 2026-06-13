@@ -342,8 +342,7 @@ export default function HomePage() {
                   {participant ? "Sua inscrição" : "Entrada no bolão"}
                 </h2>
                 <p className="section-subtitle">
-                  Primeiro coloque nome e e-mail. Depois disso, o restante do bolão aparece:
-                  regras, palpites e classificação.
+                  Preencha seus dados e faça o Pix para participar.
                 </p>
               </div>
               {participant && (
@@ -468,7 +467,7 @@ export default function HomePage() {
               <div className="card">
                 <h3>Resumo</h3>
                 <p>
-                  Faça a inscrição, envie o Pix e registre os palpites antes de cada jogo.
+                  Inscreva-se, envie o Pix e salve seus palpites antes de cada jogo começar.
                 </p>
               </div>
             </aside>
@@ -483,8 +482,7 @@ export default function HomePage() {
                   <p className="section-kicker">Regulamento</p>
                   <h2 className="section-title">Regras do Bolão da Turma 101</h2>
                   <p className="section-subtitle">
-                    As regras vêm antes dos palpites para todo mundo apostar sabendo exatamente como
-                    a pontuação funciona.
+                    Como a pontuação funciona no bolão.
                   </p>
                 </div>
               </div>
@@ -539,6 +537,13 @@ export default function HomePage() {
                   <strong>Nenhum jogo cadastrado ainda.</strong>
                 </div>
               ) : (
+                <>
+                <div className="notice block-notice" style={{ marginBottom: 16 }}>
+                  <AlertCircle size={18} />
+                  <span>
+                    ⚠️ Clique em <strong>Salvar palpite</strong> em cada jogo. Salvar um não salva os outros!
+                  </span>
+                </div>
                 <div className="matches-grid">
                   {data.matches.map((match) => {
                     const draft = drafts[match.id] || { homeScore: "", awayScore: "" };
@@ -628,6 +633,7 @@ export default function HomePage() {
                     );
                   })}
                 </div>
+                </>
               )}
             </section>
 
