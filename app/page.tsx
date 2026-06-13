@@ -8,7 +8,7 @@ import {
   Clock3,
   Coins,
   Lock,
-  LogIn,
+  LogOut,
   Medal,
   Save,
   ShieldCheck,
@@ -17,18 +17,16 @@ import {
   UserPlus,
   Users
 } from "lucide-react";
-import type { BootstrapPayload, MatchRecord, PredictionRecord } from "@/lib/types";
+import type { BootstrapPayload, MatchRecord, PixStatus, PredictionRecord } from "@/lib/types";
 
 const PIX_KEY = "(86) 99910-3642";
 const STORAGE_KEY = "bolao_turma_101_participante";
-
-type TabId = "inscricao" | "palpites" | "classificacao" | "regras";
 
 type ParticipantSession = {
   id: string;
   name: string;
   email: string;
-  pixStatus: "pending" | "confirmed" | "rejected";
+  pixStatus: PixStatus;
   accessToken: string;
   createdAt: string;
   confirmedAt: string | null;
@@ -40,19 +38,19 @@ async function readJsonResponse<T>(response: Response): Promise<T> {
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(payload.error || "Nao foi possivel concluir a acao.");
+    throw new Error(payload.error || "Não foi possível concluir a ação.");
   }
 
   return payload as T;
 }
 
-function pixLabel(status: ParticipantSession["pixStatus"]) {
+function pixLabel(status: PixStatus) {
   if (status === "confirmed") return "Pix confirmado";
   if (status === "rejected") return "Pix recusado";
   return "Aguardando Pix";
 }
 
-function pixClass(status: ParticipantSession["pixStatus"]) {
+function pixClass(status: PixStatus) {
   if (status === "confirmed") return "status-confirmed";
   if (status === "rejected") return "status-rejected";
   return "status-pending";
@@ -75,8 +73,26 @@ function predictionText(prediction?: PredictionRecord | { home_score: number; aw
   return `${prediction.home_score} x ${prediction.away_score}`;
 }
 
+function countryCode(value: string) {
+  const normalized = value.toLowerCase();
+  if (normalized === "br" || normalized.includes("🇧🇷") || normalized.includes("brasil")) return "br";
+  if (normalized === "ma" || normalized.includes("🇲🇦") || normalized.includes("marrocos")) return "ma";
+  if (normalized === "ht" || normalized.includes("🇭🇹") || normalized.includes("haiti")) return "ht";
+  if (normalized === "sct" || normalized.includes("🏴") || normalized.includes("escócia")) return "sct";
+  return "br";
+}
+
+function flagSrc(value: string, label: string) {
+  return `/flags/${countryCode(`${value} ${label}`)}.svg`;
+}
+
+function Flag({ value, label }: { value: string; label: string }) {
+  return (
+    <img className="flag-img" src={flagSrc(value, label)} alt={`Bandeira: ${label}`} />
+  );
+}
+
 export default function HomePage() {
-  const [activeTab, setActiveTab] = useState<TabId>("inscricao");
   const [data, setData] = useState<BootstrapPayload | null>(null);
   const [participant, setParticipant] = useState<ParticipantSession | null>(null);
   const [myPredictions, setMyPredictions] = useState<Record<number, PredictionRecord>>({});
@@ -153,7 +169,7 @@ export default function HomePage() {
         if (storedSession) setParticipant(storedSession);
         await refreshEverything(storedSession);
       } catch (caught) {
-        const message = caught instanceof Error ? caught.message : "Erro ao carregar o bolao.";
+        const message = caught instanceof Error ? caught.message : "Erro ao carregar o bolão.";
         setError(message);
         localStorage.removeItem(STORAGE_KEY);
       } finally {
@@ -181,11 +197,10 @@ export default function HomePage() {
       setParticipant(payload.participant);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(payload.participant));
       setSignupForm({ name: "", email: "" });
-      setActiveTab("palpites");
       await refreshEverything(payload.participant);
-      showToast("Inscricao feita. Agora falta a organizacao confirmar o Pix.");
+      showToast("Entrada registrada. Agora você já pode ver as regras e salvar palpites.");
     } catch (caught) {
-      const message = caught instanceof Error ? caught.message : "Nao foi possivel inscrever.";
+      const message = caught instanceof Error ? caught.message : "Não foi possível inscrever.";
       setError(message);
     } finally {
       setBusy(false);
@@ -194,8 +209,8 @@ export default function HomePage() {
 
   async function savePrediction(match: MatchRecord) {
     if (!participant) {
-      setActiveTab("inscricao");
-      showToast("Faca sua inscricao antes de salvar o palpite.");
+      showToast("Faça sua inscrição ou entre antes de salvar o palpite.");
+      document.getElementById("inscricao")?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
 
@@ -204,7 +219,7 @@ export default function HomePage() {
     const awayScore = Number(draft.awayScore);
 
     if (!Number.isInteger(homeScore) || !Number.isInteger(awayScore)) {
-      showToast("Preencha os dois placares com numeros inteiros.");
+      showToast("Preencha os dois placares com números inteiros.");
       return;
     }
 
@@ -233,16 +248,24 @@ export default function HomePage() {
       await refreshEverything(participant);
       showToast("Palpite salvo com sucesso.");
     } catch (caught) {
-      const message = caught instanceof Error ? caught.message : "Nao foi possivel salvar.";
+      const message = caught instanceof Error ? caught.message : "Não foi possível salvar.";
       setError(message);
     } finally {
       setBusy(false);
     }
   }
 
-  async function copyPix() {
-    await navigator.clipboard.writeText(PIX_KEY);
-    showToast("Chave Pix copiada.");
+  async function copyText(text: string, message: string) {
+    await navigator.clipboard.writeText(text);
+    showToast(message);
+  }
+
+  function leaveParticipant() {
+    localStorage.removeItem(STORAGE_KEY);
+    setParticipant(null);
+    setMyPredictions({});
+    setDrafts({});
+    showToast("Você saiu deste dispositivo.");
   }
 
   function updateDraft(matchId: number, key: "homeScore" | "awayScore", value: string) {
@@ -256,13 +279,6 @@ export default function HomePage() {
     }));
   }
 
-  const tabs: Array<{ id: TabId; label: string; icon: React.ReactNode }> = [
-    { id: "inscricao", label: "Inscricao", icon: <UserPlus size={17} /> },
-    { id: "palpites", label: "Palpites", icon: <Save size={17} /> },
-    { id: "classificacao", label: "Classificacao", icon: <Trophy size={17} /> },
-    { id: "regras", label: "Regras", icon: <ShieldCheck size={17} /> }
-  ];
-
   return (
     <div className="site-shell">
       <header className="hero">
@@ -272,7 +288,7 @@ export default function HomePage() {
               <span className="brand-ball">
                 <Trophy size={20} />
               </span>
-              <span>Bolao da Turma 101</span>
+              <span>Bolão da Turma 101</span>
             </div>
             <a className="admin-link" href="/admin">
               <ShieldCheck size={16} />
@@ -285,10 +301,10 @@ export default function HomePage() {
               <Sparkles size={16} />
               Copa da Turma 101
             </div>
-            <h1>Bolao da Turma 101</h1>
+            <h1>Bolão da Turma 101</h1>
             <p>
-              Inscreva-se, envie o Pix, registre seus placares dos jogos do Brasil e acompanhe a
-              classificacao geral em tempo real.
+              Entre no bolão, confira as regras, registre seus palpites dos jogos do Brasil e
+              acompanhe a classificação em uma página só.
             </p>
             <div className="hero-meta">
               <span className="meta-pill">
@@ -307,25 +323,9 @@ export default function HomePage() {
         </div>
       </header>
 
-      <div className="main-nav-wrap">
-        <nav className="main-nav" aria-label="Areas do bolao">
-          {tabs.map((tab) => (
-            <button
-              className={`tab-button ${activeTab === tab.id ? "active" : ""}`}
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              type="button"
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </div>
-
       {loading && <div className="loading-bar" />}
 
-      <main className="main">
+      <main className="main flow-stack">
         {error && (
           <div className="error-state" role="alert">
             <AlertCircle size={24} />
@@ -333,119 +333,129 @@ export default function HomePage() {
           </div>
         )}
 
-        {activeTab === "inscricao" && (
-          <section className="workspace-grid">
-            <div className="panel">
-              <div className="panel-header">
-                <div>
-                  <p className="section-kicker">Primeiro passo</p>
-                  <h2 className="section-title">Inscricao no bolao</h2>
-                  <p className="section-subtitle">
-                    Coloque nome e e-mail para participar. A pontuacao so entra na classificacao
-                    quando o Pix for confirmado pela organizacao.
-                  </p>
-                </div>
-                {participant && (
-                  <span className={`status-pill ${pixClass(participant.pixStatus)}`}>
-                    <ShieldCheck size={14} />
-                    {pixLabel(participant.pixStatus)}
-                  </span>
-                )}
+        <section className={`workspace-grid ${participant ? "" : "auth-only"}`} id="inscricao">
+          <div className="panel">
+            <div className="panel-header">
+              <div>
+                <p className="section-kicker">Primeiro passo</p>
+                <h2 className="section-title">
+                  {participant ? "Sua inscrição" : "Entrada no bolão"}
+                </h2>
+                <p className="section-subtitle">
+                  Primeiro coloque nome e e-mail. Depois disso, o restante do bolão aparece:
+                  regras, palpites e classificação.
+                </p>
               </div>
-
-              {participant ? (
-                <div className="form-grid">
-                  <div className="notice">
-                    <CheckCircle2 size={20} />
-                    <span>
-                      Voce esta inscrito como <strong>{participant.name}</strong>. Enquanto o Pix
-                      estiver pendente, seus palpites ficam salvos, mas nao concorrem ao premio.
-                    </span>
-                  </div>
-                  <div className="pix-card">
-                    <div className="pix-topline">
-                      <div>
-                        <p className="section-kicker">Chave Pix</p>
-                        <div className="pix-key">{PIX_KEY}</div>
-                      </div>
-                      <button className="icon-button" onClick={copyPix} type="button" title="Copiar Pix">
-                        <Clipboard size={18} />
-                      </button>
-                    </div>
-                    <p>
-                      Depois do pagamento, aguarde a organizacao marcar sua inscricao como
-                      confirmada no painel administrativo.
-                    </p>
-                  </div>
-                  <button className="primary-button" onClick={() => setActiveTab("palpites")}>
-                    <LogIn size={18} />
-                    Ir para os palpites
-                  </button>
-                </div>
-              ) : (
-                <form className="form-grid" onSubmit={handleSignup}>
-                  <div className="field">
-                    <label htmlFor="name">Nome completo</label>
-                    <input
-                      autoComplete="name"
-                      id="name"
-                      onChange={(event) =>
-                        setSignupForm((current) => ({ ...current, name: event.target.value }))
-                      }
-                      placeholder="Ex: Joao da Silva"
-                      required
-                      value={signupForm.name}
-                    />
-                  </div>
-                  <div className="field">
-                    <label htmlFor="email">E-mail</label>
-                    <input
-                      autoComplete="email"
-                      id="email"
-                      onChange={(event) =>
-                        setSignupForm((current) => ({ ...current, email: event.target.value }))
-                      }
-                      placeholder="voce@email.com"
-                      required
-                      type="email"
-                      value={signupForm.email}
-                    />
-                  </div>
-
-                  <div className="pix-card">
-                    <div className="pix-topline">
-                      <div>
-                        <p className="section-kicker">Pagamento obrigatorio</p>
-                        <div className="pix-key">{PIX_KEY}</div>
-                      </div>
-                      <button className="icon-button" onClick={copyPix} type="button" title="Copiar Pix">
-                        <Clipboard size={18} />
-                      </button>
-                    </div>
-                    <div className="notice">
-                      <AlertCircle size={18} />
-                      <span>
-                        Somente concorre quem fez o Pix e teve a inscricao confirmada pela
-                        organizacao.
-                      </span>
-                    </div>
-                  </div>
-
-                  <button className="primary-button" disabled={busy} type="submit">
-                    <UserPlus size={18} />
-                    Confirmar inscricao
-                  </button>
-                </form>
+              {participant && (
+                <span className={`status-pill ${pixClass(participant.pixStatus)}`}>
+                  <ShieldCheck size={14} />
+                  {pixLabel(participant.pixStatus)}
+                </span>
               )}
             </div>
 
+            {participant ? (
+              <div className="form-grid">
+                <div className="notice">
+                  <CheckCircle2 size={20} />
+                  <span>
+                    Você está participando como <strong>{participant.name}</strong>. Seus palpites
+                    ficam salvos, mas só concorrem quando o Pix for confirmado.
+                  </span>
+                </div>
+
+                <div className="pix-card">
+                  <div className="pix-topline">
+                    <div>
+                      <p className="section-kicker">Pagamento obrigatório</p>
+                      <div className="pix-key">{PIX_KEY}</div>
+                    </div>
+                    <button
+                      className="icon-button"
+                      onClick={() => copyText(PIX_KEY, "Chave Pix copiada.")}
+                      title="Copiar Pix"
+                      type="button"
+                    >
+                      <Clipboard size={18} />
+                    </button>
+                  </div>
+                </div>
+
+                <button className="danger-button" onClick={leaveParticipant} type="button">
+                  <LogOut size={17} />
+                  Sair deste dispositivo
+                </button>
+              </div>
+            ) : (
+              <form className="form-grid" onSubmit={handleSignup}>
+                <div className="field">
+                  <label htmlFor="name">Nome completo</label>
+                  <input
+                    autoComplete="name"
+                    id="name"
+                    onChange={(event) =>
+                      setSignupForm((current) => ({ ...current, name: event.target.value }))
+                    }
+                    placeholder="Ex: João da Silva"
+                    required
+                    value={signupForm.name}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="email">E-mail</label>
+                  <input
+                    autoComplete="email"
+                    id="email"
+                    onChange={(event) =>
+                      setSignupForm((current) => ({ ...current, email: event.target.value }))
+                    }
+                    placeholder="voce@email.com"
+                    required
+                    type="email"
+                    value={signupForm.email}
+                  />
+                </div>
+
+                <div className="pix-card">
+                  <div className="pix-topline">
+                    <div>
+                      <p className="section-kicker">Pagamento obrigatório</p>
+                      <div className="pix-key">{PIX_KEY}</div>
+                    </div>
+                    <button
+                      className="icon-button"
+                      onClick={() => copyText(PIX_KEY, "Chave Pix copiada.")}
+                      title="Copiar Pix"
+                      type="button"
+                    >
+                      <Clipboard size={18} />
+                    </button>
+                  </div>
+                  <div className="notice">
+                    <AlertCircle size={18} />
+                    <span>
+                      Somente concorre quem fez o Pix e teve a inscrição confirmada pela
+                      organização.
+                    </span>
+                  </div>
+                </div>
+
+                <button className="primary-button" disabled={busy} type="submit">
+                  <UserPlus size={18} />
+                  Entrar no bolão
+                </button>
+              </form>
+            )}
+          </div>
+
+          {participant && (
             <aside className="side-stack">
               <div className="card">
                 <h3>Jogos da primeira rodada</h3>
                 <ul className="quick-list">
                   {(data?.matches || []).map((match) => (
                     <li key={match.id}>
-                      <span>{match.home_flag}</span>
+                      <Flag value={match.home_flag} label={match.home_team} />
                       <span>
                         <strong>{match.home_team}</strong> x <strong>{match.away_team}</strong>
                         <br />
@@ -456,223 +466,25 @@ export default function HomePage() {
                 </ul>
               </div>
               <div className="card">
-                <h3>Como pontua</h3>
+                <h3>Resumo</h3>
                 <p>
-                  Placar exato vale 3 pontos e concorre ao premio da rodada. Acertar vencedor ou
-                  empate vale 1 ponto. Errou o resultado, 0 ponto.
+                  Faça a inscrição, envie o Pix e registre os palpites antes de cada jogo.
                 </p>
               </div>
             </aside>
-          </section>
-        )}
+          )}
+        </section>
 
-        {activeTab === "palpites" && (
-          <section className="panel">
-            <div className="panel-header">
-              <div>
-                <p className="section-kicker">Primeira rodada</p>
-                <h2 className="section-title">Palpites dos jogos do Brasil</h2>
-                <p className="section-subtitle">
-                  Salve o placar antes do fechamento do jogo. A organizacao pode travar os palpites
-                  no painel admin.
-                </p>
-              </div>
-              {participant ? (
-                <span className={`status-pill ${pixClass(participant.pixStatus)}`}>
-                  {pixLabel(participant.pixStatus)}
-                </span>
-              ) : (
-                <button className="secondary-button" onClick={() => setActiveTab("inscricao")}>
-                  <UserPlus size={16} />
-                  Inscrever
-                </button>
-              )}
-            </div>
-
-            {!data?.matches.length ? (
-              <div className="empty-state">
-                <Clock3 size={24} />
-                <strong>Nenhum jogo cadastrado ainda.</strong>
-              </div>
-            ) : (
-              <div className="matches-grid">
-                {data.matches.map((match) => {
-                  const draft = drafts[match.id] || { homeScore: "", awayScore: "" };
-                  const savedPrediction = myPredictions[match.id];
-                  const isClosed = match.status !== "open";
-
-                  return (
-                    <article className="match-card" key={match.id}>
-                      <div className="match-head">
-                        <div className="match-round">
-                          <Trophy size={14} />
-                          {match.round_label} · {match.group_label}
-                        </div>
-                        <span className={`status-pill status-${match.status}`}>
-                          {matchStatusIcon(match.status)}
-                          {matchStatusLabel(match.status)}
-                        </span>
-                      </div>
-                      <div className="match-body">
-                        <div className="scoreboard">
-                          <div className="team">
-                            <div className="flag">{match.home_flag}</div>
-                            <div className="team-name">{match.home_team}</div>
-                          </div>
-                          <div className="score-entry">
-                            <div className="score-label">Seu palpite</div>
-                            <div className="score-fields">
-                              <input
-                                className="score-input"
-                                disabled={isClosed || !participant}
-                                inputMode="numeric"
-                                min={0}
-                                max={20}
-                                onChange={(event) =>
-                                  updateDraft(match.id, "homeScore", event.target.value)
-                                }
-                                placeholder="-"
-                                type="number"
-                                value={draft.homeScore}
-                              />
-                              <span className="score-separator">x</span>
-                              <input
-                                className="score-input"
-                                disabled={isClosed || !participant}
-                                inputMode="numeric"
-                                min={0}
-                                max={20}
-                                onChange={(event) =>
-                                  updateDraft(match.id, "awayScore", event.target.value)
-                                }
-                                placeholder="-"
-                                type="number"
-                                value={draft.awayScore}
-                              />
-                            </div>
-                          </div>
-                          <div className="team">
-                            <div className="flag">{match.away_flag}</div>
-                            <div className="team-name">{match.away_team}</div>
-                          </div>
-                        </div>
-
-                        <div className="match-actions">
-                          <span className="match-note">
-                            {match.display_date}
-                            {savedPrediction ? ` · Salvo: ${predictionText(savedPrediction)}` : ""}
-                            {match.status === "finished" &&
-                            match.actual_home_score !== null &&
-                            match.actual_away_score !== null
-                              ? ` · Final: ${match.actual_home_score} x ${match.actual_away_score}`
-                              : ""}
-                          </span>
-                          <button
-                            className="secondary-button"
-                            disabled={busy || isClosed || !participant}
-                            onClick={() => savePrediction(match)}
-                            type="button"
-                          >
-                            <Save size={17} />
-                            Salvar palpite
-                          </button>
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-        )}
-
-        {activeTab === "classificacao" && (
-          <section className="panel">
-            <div className="panel-header">
-              <div>
-                <p className="section-kicker">Ao vivo</p>
-                <h2 className="section-title">Classificacao geral</h2>
-                <p className="section-subtitle">
-                  Participantes com Pix pendente aparecem, mas so pontuam e concorrem depois da
-                  confirmacao.
-                </p>
-              </div>
-            </div>
-
-            {!data?.leaderboard.length ? (
-              <div className="empty-state">
-                <Users size={24} />
-                <strong>Ninguem inscrito ainda.</strong>
-              </div>
-            ) : (
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Participante</th>
-                      {(data?.matches || []).map((match) => (
-                        <th key={match.id}>{match.away_team}</th>
-                      ))}
-                      <th>Exatos</th>
-                      <th>Pontos</th>
-                      <th>Pix</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.leaderboard.map((entry, index) => (
-                      <tr key={entry.participantId}>
-                        <td className="rank">{index + 1}º</td>
-                        <td>
-                          <strong>{entry.name}</strong>
-                        </td>
-                        {(data?.matches || []).map((match) => (
-                          <td key={match.id}>{predictionText(entry.predictions[match.id])}</td>
-                        ))}
-                        <td>{entry.exactHits}</td>
-                        <td>
-                          <span className="points-badge">{entry.totalPoints}</span>
-                        </td>
-                        <td>
-                          <span className={`status-pill ${pixClass(entry.pixStatus)}`}>
-                            {entry.pixStatus === "confirmed" ? "Confirmado" : "Pendente"}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {Boolean(data?.prizeWinners.length) && (
-              <div className="card" style={{ marginTop: 18 }}>
-                <h3>Premios da rodada</h3>
-                <ul className="quick-list">
-                  {data?.prizeWinners.map((winner) => (
-                    <li key={winner.matchId}>
-                      <Medal size={18} />
-                      <span>
-                        <strong>{winner.matchLabel}:</strong>{" "}
-                        {winner.names.length ? winner.names.join(", ") : "sem acertadores exatos"}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </section>
-        )}
-
-        {activeTab === "regras" && (
-          <section className="workspace-grid">
-            <div className="panel">
+        {participant && (
+          <>
+            <section className="panel" id="regras">
               <div className="panel-header">
                 <div>
                   <p className="section-kicker">Regulamento</p>
-                  <h2 className="section-title">Regras do Bolao da Turma 101</h2>
+                  <h2 className="section-title">Regras do Bolão da Turma 101</h2>
                   <p className="section-subtitle">
-                    Regras simples para todo mundo acompanhar sem discussao na hora da pontuacao.
+                    As regras vêm antes dos palpites para todo mundo apostar sabendo exatamente como
+                    a pontuação funciona.
                   </p>
                 </div>
               </div>
@@ -681,12 +493,14 @@ export default function HomePage() {
                 <div className="rule-card">
                   <div className="rule-number">3</div>
                   <strong>Placar exato</strong>
-                  <span>Acertou o placar certinho do jogo do Brasil.</span>
+                  <span>
+                    Acertou o placar certinho do jogo do Brasil e concorre ao prêmio da rodada.
+                  </span>
                 </div>
                 <div className="rule-card">
                   <div className="rule-number">1</div>
                   <strong>Resultado certo</strong>
-                  <span>Acertou vencedor ou empate, mas nao o placar.</span>
+                  <span>Acertou vencedor ou empate, mas não acertou o placar exato.</span>
                 </div>
                 <div className="rule-card">
                   <div className="rule-number">0</div>
@@ -694,25 +508,205 @@ export default function HomePage() {
                   <span>Errou quem ganhou ou se terminou empatado.</span>
                 </div>
               </div>
-            </div>
 
-            <aside className="side-stack">
-              <div className="card">
-                <h3>Pix obrigatorio</h3>
-                <p>
-                  A inscricao so concorre quando a organizacao confirmar o pagamento da chave{" "}
-                  <strong>{PIX_KEY}</strong>.
-                </p>
+              <div className="notice block-notice">
+                <Coins size={18} />
+                <span>
+                  O Pix é obrigatório. A inscrição só entra na disputa quando a organização
+                  confirmar o pagamento da chave <strong>{PIX_KEY}</strong>.
+                </span>
               </div>
-              <div className="card">
-                <h3>Premio da rodada</h3>
-                <p>
-                  Quem acertar o placar exato concorre ao premio da rodada. Se houver empate entre
-                  acertadores, a organizacao decide a divisao do premio.
-                </p>
+            </section>
+
+            <section className="panel" id="palpites">
+              <div className="panel-header">
+                <div>
+                  <p className="section-kicker">Palpites</p>
+                  <h2 className="section-title">Jogos do Brasil</h2>
+                  <p className="section-subtitle">
+                    Digite o placar que você acredita. Quando o jogo for travado pela organização,
+                    não será mais possível alterar.
+                  </p>
+                </div>
+                <span className={`status-pill ${pixClass(participant.pixStatus)}`}>
+                  {pixLabel(participant.pixStatus)}
+                </span>
               </div>
-            </aside>
-          </section>
+
+              {!data?.matches.length ? (
+                <div className="empty-state">
+                  <Clock3 size={24} />
+                  <strong>Nenhum jogo cadastrado ainda.</strong>
+                </div>
+              ) : (
+                <div className="matches-grid">
+                  {data.matches.map((match) => {
+                    const draft = drafts[match.id] || { homeScore: "", awayScore: "" };
+                    const savedPrediction = myPredictions[match.id];
+                    const isClosed = match.status !== "open";
+
+                    return (
+                      <article className="match-card" key={match.id}>
+                        <div className="match-head">
+                          <div className="match-round">
+                            <Trophy size={14} />
+                            {match.round_label} · {match.group_label}
+                          </div>
+                          <span className={`status-pill status-${match.status}`}>
+                            {matchStatusIcon(match.status)}
+                            {matchStatusLabel(match.status)}
+                          </span>
+                        </div>
+                        <div className="match-body">
+                          <div className="scoreboard">
+                            <div className="team">
+                              <Flag value={match.home_flag} label={match.home_team} />
+                              <div className="team-name">{match.home_team}</div>
+                            </div>
+                            <div className="score-entry">
+                              <div className="score-label">Seu palpite</div>
+                              <div className="score-fields">
+                                <input
+                                  className="score-input"
+                                  disabled={isClosed}
+                                  inputMode="numeric"
+                                  min={0}
+                                  max={20}
+                                  onChange={(event) =>
+                                    updateDraft(match.id, "homeScore", event.target.value)
+                                  }
+                                  placeholder="-"
+                                  type="number"
+                                  value={draft.homeScore}
+                                />
+                                <span className="score-separator">x</span>
+                                <input
+                                  className="score-input"
+                                  disabled={isClosed}
+                                  inputMode="numeric"
+                                  min={0}
+                                  max={20}
+                                  onChange={(event) =>
+                                    updateDraft(match.id, "awayScore", event.target.value)
+                                  }
+                                  placeholder="-"
+                                  type="number"
+                                  value={draft.awayScore}
+                                />
+                              </div>
+                            </div>
+                            <div className="team">
+                              <Flag value={match.away_flag} label={match.away_team} />
+                              <div className="team-name">{match.away_team}</div>
+                            </div>
+                          </div>
+
+                          <div className="match-actions">
+                            <span className="match-note">
+                              {match.display_date}
+                              {savedPrediction
+                                ? ` · Salvo: ${predictionText(savedPrediction)}`
+                                : ""}
+                              {match.status === "finished" &&
+                              match.actual_home_score !== null &&
+                              match.actual_away_score !== null
+                                ? ` · Final: ${match.actual_home_score} x ${match.actual_away_score}`
+                                : ""}
+                            </span>
+                            <button
+                              className="secondary-button"
+                              disabled={busy || isClosed}
+                              onClick={() => savePrediction(match)}
+                              type="button"
+                            >
+                              <Save size={17} />
+                              Salvar palpite
+                            </button>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            <section className="panel" id="classificacao">
+              <div className="panel-header">
+                <div>
+                  <p className="section-kicker">Classificação</p>
+                  <h2 className="section-title">Classificação geral</h2>
+                  <p className="section-subtitle">
+                    Participantes com Pix pendente aparecem, mas só pontuam e concorrem depois da
+                    confirmação.
+                  </p>
+                </div>
+              </div>
+
+              {!data?.leaderboard.length ? (
+                <div className="empty-state">
+                  <Users size={24} />
+                  <strong>Ninguém inscrito ainda.</strong>
+                </div>
+              ) : (
+                <div className="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Participante</th>
+                        {(data?.matches || []).map((match) => (
+                          <th key={match.id}>{match.away_team}</th>
+                        ))}
+                        <th>Exatos</th>
+                        <th>Pontos</th>
+                        <th>Pix</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.leaderboard.map((entry, index) => (
+                        <tr key={entry.participantId}>
+                          <td className="rank">{index + 1}º</td>
+                          <td>
+                            <strong>{entry.name}</strong>
+                          </td>
+                          {(data?.matches || []).map((match) => (
+                            <td key={match.id}>{predictionText(entry.predictions[match.id])}</td>
+                          ))}
+                          <td>{entry.exactHits}</td>
+                          <td>
+                            <span className="points-badge">{entry.totalPoints}</span>
+                          </td>
+                          <td>
+                            <span className={`status-pill ${pixClass(entry.pixStatus)}`}>
+                              {entry.pixStatus === "confirmed" ? "Confirmado" : "Pendente"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {Boolean(data?.prizeWinners.length) && (
+                <div className="card inline-card">
+                  <h3>Prêmios da rodada</h3>
+                  <ul className="quick-list">
+                    {data?.prizeWinners.map((winner) => (
+                      <li key={winner.matchId}>
+                        <Medal size={18} />
+                        <span>
+                          <strong>{winner.matchLabel}:</strong>{" "}
+                          {winner.names.length ? winner.names.join(", ") : "sem acertadores exatos"}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </section>
+          </>
         )}
       </main>
 

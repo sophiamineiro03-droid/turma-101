@@ -4,6 +4,34 @@ import { handleApiError, isValidEmail, jsonError, normalizeEmail } from "@/lib/a
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { PrivateParticipantRecord } from "@/lib/types";
 
+function serializeParticipant(participant: PrivateParticipantRecord) {
+  return {
+    id: participant.id,
+    name: participant.name,
+    email: participant.email,
+    pixStatus: participant.pix_status,
+    accessToken: participant.access_token,
+    createdAt: participant.created_at,
+    confirmedAt: participant.confirmed_at
+  };
+}
+
+async function findParticipantByEmail(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  email: string
+) {
+  const result = await supabase
+    .from("participants")
+    .select("id,name,email,pix_status,access_token,created_at,confirmed_at")
+    .eq("email", email)
+    .order("created_at", { ascending: true })
+    .limit(1);
+
+  if (result.error) throw result.error;
+
+  return (result.data?.[0] || null) as PrivateParticipantRecord | null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -15,10 +43,18 @@ export async function POST(request: NextRequest) {
     }
 
     if (!isValidEmail(email)) {
-      return jsonError("Informe um e-mail valido.");
+      return jsonError("Informe um e-mail válido.");
     }
 
     const supabase = getSupabaseAdmin();
+    const existingParticipant = await findParticipantByEmail(supabase, email);
+
+    if (existingParticipant) {
+      return NextResponse.json({
+        participant: serializeParticipant(existingParticipant)
+      });
+    }
+
     const insertResult = await supabase
       .from("participants")
       .insert({
@@ -31,10 +67,13 @@ export async function POST(request: NextRequest) {
 
     if (insertResult.error) {
       if (insertResult.error.code === "23505") {
-        return jsonError(
-          "Este e-mail ja esta inscrito. Use o mesmo dispositivo ou fale com a organizacao para recuperar o acesso.",
-          409
-        );
+        const participant = await findParticipantByEmail(supabase, email);
+
+        if (participant) {
+          return NextResponse.json({
+            participant: serializeParticipant(participant)
+          });
+        }
       }
 
       throw insertResult.error;
@@ -44,15 +83,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        participant: {
-          id: participant.id,
-          name: participant.name,
-          email: participant.email,
-          pixStatus: participant.pix_status,
-          accessToken: participant.access_token,
-          createdAt: participant.created_at,
-          confirmedAt: participant.confirmed_at
-        }
+        participant: serializeParticipant(participant)
       },
       { status: 201 }
     );

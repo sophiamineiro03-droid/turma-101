@@ -8,7 +8,7 @@ export function jsonError(message: string, status = 400) {
 export function handleApiError(error: unknown) {
   if (isMissingSupabaseConfigError(error)) {
     return jsonError(
-      "Supabase ainda nao foi configurado. Preencha as variaveis de ambiente.",
+      "Supabase ainda não foi configurado. Preencha as variáveis de ambiente.",
       503
     );
   }

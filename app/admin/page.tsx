@@ -48,7 +48,7 @@ async function readJsonResponse<T>(response: Response): Promise<T> {
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(payload.error || "Nao foi possivel concluir a acao.");
+    throw new Error(payload.error || "Não foi possível concluir a ação.");
   }
 
   return payload as T;
@@ -151,7 +151,7 @@ export default function AdminPage() {
       await loadSummary();
       showToast("Acesso administrativo liberado.");
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Nao foi possivel entrar.");
+      setError(caught instanceof Error ? caught.message : "Não foi possível entrar.");
     } finally {
       setBusy(false);
     }
@@ -178,7 +178,7 @@ export default function AdminPage() {
       await loadSummary();
       showToast("Status do Pix atualizado.");
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Nao foi possivel atualizar.");
+      setError(caught instanceof Error ? caught.message : "Não foi possível atualizar.");
     } finally {
       setBusy(false);
     }
@@ -206,7 +206,7 @@ export default function AdminPage() {
       await loadSummary();
       showToast("Jogo atualizado.");
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Nao foi possivel atualizar o jogo.");
+      setError(caught instanceof Error ? caught.message : "Não foi possível atualizar o jogo.");
     } finally {
       setBusy(false);
     }
@@ -236,7 +236,7 @@ export default function AdminPage() {
             <span className="brand-ball">
               <ShieldCheck size={20} />
             </span>
-            <span>Painel do Bolao da Turma 101</span>
+            <span>Painel do Bolão da Turma 101</span>
           </div>
           <div className="admin-actions">
             <a className="ghost-link" href="/">
@@ -302,7 +302,7 @@ export default function AdminPage() {
                 <h3>O que este painel faz</h3>
                 <p>
                   Confirma Pix, trava palpites antes do jogo, informa o placar final e atualiza a
-                  classificacao automaticamente.
+                  classificação automaticamente.
                 </p>
               </div>
             </aside>
@@ -331,10 +331,10 @@ export default function AdminPage() {
               <div className="panel-header">
                 <div>
                   <p className="section-kicker">Pagamento</p>
-                  <h2 className="section-title">Confirmacao de Pix</h2>
+                  <h2 className="section-title">Confirmação de Pix</h2>
                   <p className="section-subtitle">
                     Marque como confirmado somente quem realmente pagou. Pendentes ficam fora da
-                    pontuacao ate a confirmacao.
+                    pontuação até a confirmação.
                   </p>
                 </div>
               </div>
@@ -352,7 +352,7 @@ export default function AdminPage() {
                         <th>Nome</th>
                         <th>E-mail</th>
                         <th>Status</th>
-                        <th>Acoes</th>
+                        <th>Ações</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -412,7 +412,7 @@ export default function AdminPage() {
                   <p className="section-kicker">Jogos</p>
                   <h2 className="section-title">Fechamento e resultados</h2>
                   <p className="section-subtitle">
-                    Use aberto para receber palpites, travado quando o jogo comecar e finalizado
+                    Use aberto para receber palpites, travado quando o jogo começar e finalizado
                     quando tiver o placar oficial.
                   </p>
                 </div>
@@ -502,7 +502,7 @@ export default function AdminPage() {
                   <p className="section-kicker">Auditoria</p>
                   <h2 className="section-title">Palpites recebidos</h2>
                   <p className="section-subtitle">
-                    Visao rapida dos palpites por participante para conferir antes e depois dos
+                    Visão rápida dos palpites por participante para conferir antes e depois dos
                     jogos.
                   </p>
                 </div>
@@ -576,7 +576,7 @@ export default function AdminPage() {
               <div className="panel">
                 <div className="panel-header">
                   <div>
-                    <p className="section-kicker">Premiacao</p>
+                    <p className="section-kicker">Premiação</p>
                     <h2 className="section-title">Vencedores por rodada</h2>
                   </div>
                 </div>

@@ -73,9 +73,9 @@ insert into public.matches (
   starts_at,
   status
 ) values
-  (1, 'Brasil', 'Marrocos', '🇧🇷', '🇲🇦', '1ª rodada', 'Grupo A', 'Hoje, 13/06/2026', '2026-06-13 20:00:00-03', 'open'),
-  (2, 'Brasil', 'Haiti', '🇧🇷', '🇭🇹', '1ª rodada', 'Grupo A', 'Em breve', null, 'open'),
-  (3, 'Brasil', 'Escócia', '🇧🇷', '🏴', '1ª rodada', 'Grupo A', 'Em breve', null, 'open')
+  (1, 'Brasil', 'Marrocos', 'BR', 'MA', '1ª rodada', 'Grupo A', 'Hoje, 13/06/2026', '2026-06-13 20:00:00-03', 'open'),
+  (2, 'Brasil', 'Haiti', 'BR', 'HT', '1ª rodada', 'Grupo A', 'Em breve', null, 'open'),
+  (3, 'Brasil', 'Escócia', 'BR', 'SCT', '1ª rodada', 'Grupo A', 'Em breve', null, 'open')
 on conflict (id) do update set
   home_team = excluded.home_team,
   away_team = excluded.away_team,

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { handleApiError } from "@/lib/api";
-import { buildLeaderboard, buildPrizeWinners } from "@/lib/scoring";
+import { buildLeaderboard, buildPrizeWinners, mergeParticipantsByEmail } from "@/lib/scoring";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { MatchRecord, ParticipantRecord, PredictionRecord } from "@/lib/types";
 
@@ -12,7 +12,7 @@ export async function GET() {
       supabase.from("matches").select("*").order("id"),
       supabase
         .from("participants")
-        .select("id,name,pix_status,created_at,confirmed_at")
+        .select("id,name,email,pix_status,created_at,confirmed_at")
         .order("created_at", { ascending: true }),
       supabase.from("predictions").select("*")
     ]);
@@ -23,11 +23,14 @@ export async function GET() {
 
     const matches = (matchesResult.data || []) as MatchRecord[];
     const participants = (participantsResult.data || []) as ParticipantRecord[];
+    const publicParticipants = mergeParticipantsByEmail(participants).map(
+      ({ email: _email, ...participant }) => participant
+    );
     const predictions = (predictionsResult.data || []) as PredictionRecord[];
 
     return NextResponse.json({
       matches,
-      participants,
+      participants: publicParticipants,
       leaderboard: buildLeaderboard(participants, predictions, matches),
       prizeWinners: buildPrizeWinners(participants, predictions, matches)
     });

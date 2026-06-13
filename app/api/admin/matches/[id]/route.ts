@@ -11,7 +11,7 @@ export async function PATCH(
   context: { params: Promise<{ id: string }> }
 ) {
   if (!verifyAdminToken(request.cookies.get(ADMIN_COOKIE)?.value)) {
-    return jsonError("Acesso administrativo necessario.", 401);
+    return jsonError("Acesso administrativo necessário.", 401);
   }
 
   try {
@@ -28,7 +28,7 @@ export async function PATCH(
         : Number(body.actualAwayScore);
 
     if (!VALID_STATUSES.includes(status)) {
-      return jsonError("Status do jogo invalido.");
+      return jsonError("Status do jogo inválido.");
     }
 
     if (status === "finished" && (!isValidScore(actualHomeScore) || !isValidScore(actualAwayScore))) {

@@ -11,7 +11,7 @@ export async function PATCH(
   context: { params: Promise<{ id: string }> }
 ) {
   if (!verifyAdminToken(request.cookies.get(ADMIN_COOKIE)?.value)) {
-    return jsonError("Acesso administrativo necessario.", 401);
+    return jsonError("Acesso administrativo necessário.", 401);
   }
 
   try {
@@ -20,7 +20,7 @@ export async function PATCH(
     const pixStatus = String(body.pixStatus || "") as PixStatus;
 
     if (!VALID_STATUSES.includes(pixStatus)) {
-      return jsonError("Status de Pix invalido.");
+      return jsonError("Status de Pix inválido.");
     }
 
     const supabase = getSupabaseAdmin();

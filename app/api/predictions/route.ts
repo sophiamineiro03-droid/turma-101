@@ -13,11 +13,11 @@ export async function POST(request: NextRequest) {
     const awayScore = Number(body.awayScore);
 
     if (!participantId || !token) {
-      return jsonError("Faca sua inscricao antes de salvar palpites.", 401);
+      return jsonError("Faça sua inscrição antes de salvar palpites.", 401);
     }
 
     if (!Number.isInteger(matchId)) {
-      return jsonError("Jogo invalido.");
+      return jsonError("Jogo inválido.");
     }
 
     if (!isValidScore(homeScore) || !isValidScore(awayScore)) {
@@ -34,19 +34,19 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (participantResult.error || !participantResult.data) {
-      return jsonError("Sessao invalida. Faca a inscricao novamente neste dispositivo.", 401);
+      return jsonError("Sessão inválida. Faça a inscrição novamente neste dispositivo.", 401);
     }
 
     const matchResult = await supabase.from("matches").select("*").eq("id", matchId).single();
 
     if (matchResult.error || !matchResult.data) {
-      return jsonError("Jogo nao encontrado.", 404);
+      return jsonError("Jogo não encontrado.", 404);
     }
 
     const match = matchResult.data as MatchRecord;
 
     if (match.status !== "open") {
-      return jsonError("Os palpites deste jogo ja foram encerrados.", 409);
+      return jsonError("Os palpites deste jogo já foram encerrados.", 409);
     }
 
     const upsertResult = await supabase

@@ -176,48 +176,15 @@ a {
   font-weight: 700;
 }
 
-.main-nav-wrap {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background: rgba(255, 255, 255, 0.94);
-  border-bottom: 1px solid var(--line);
-  backdrop-filter: blur(14px);
-}
-
-.main-nav {
-  display: flex;
-  gap: 4px;
-  width: min(1120px, calc(100% - 32px));
-  margin: 0 auto;
-  overflow-x: auto;
-}
-
-.tab-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 58px;
-  padding: 0 16px;
-  border: 0;
-  border-bottom: 3px solid transparent;
-  color: var(--muted);
-  background: transparent;
-  font-size: 14px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.tab-button.active {
-  color: var(--green-strong);
-  border-bottom-color: var(--green);
-}
-
 .main {
   width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
   padding: 32px 0 64px;
+}
+
+.flow-stack {
+  display: grid;
+  gap: 22px;
 }
 
 .workspace-grid {
@@ -225,6 +192,11 @@ a {
   grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
   gap: 22px;
   align-items: start;
+}
+
+.workspace-grid.auth-only {
+  grid-template-columns: minmax(0, 760px);
+  justify-content: center;
 }
 
 .panel,
@@ -410,6 +382,31 @@ a {
   line-height: 1.45;
 }
 
+.block-notice {
+  margin-top: 18px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.info-box {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fbfcff;
+}
+
+.info-box strong {
+  color: var(--blue-strong);
+  font-size: 22px;
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;
@@ -460,6 +457,11 @@ a {
 
 .card {
   padding: 18px;
+}
+
+.inline-card {
+  margin-top: 18px;
+  box-shadow: none;
 }
 
 .card h3 {
@@ -540,9 +542,23 @@ a {
   min-width: 0;
 }
 
-.flag {
-  font-size: 38px;
-  line-height: 1;
+.flag-img {
+  display: block;
+  width: 54px;
+  height: 38px;
+  border: 1px solid rgba(6, 31, 79, 0.18);
+  border-radius: 6px;
+  background: #fff;
+  object-fit: cover;
+  box-shadow: 0 5px 12px rgba(18, 31, 61, 0.12);
+}
+
+.quick-list .flag-img {
+  width: 26px;
+  height: 18px;
+  border-radius: 3px;
+  flex: 0 0 auto;
+  margin-top: 2px;
 }
 
 .team-name {
@@ -812,7 +828,8 @@ td {
   }
 
   .rules-grid,
-  .stats-grid {
+  .stats-grid,
+  .info-grid {
     grid-template-columns: 1fr;
   }
 
@@ -828,7 +845,6 @@ td {
   }
 
   .main,
-  .main-nav,
   .admin-main,
   .admin-header-inner {
     width: min(100% - 24px, 1120px);
@@ -849,12 +865,6 @@ td {
   .admin-header-inner {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .tab-button {
-    min-height: 54px;
-    padding: 0 12px;
-    font-size: 13px;
   }
 
   .panel,

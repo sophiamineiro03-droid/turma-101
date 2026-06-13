@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const token = request.nextUrl.searchParams.get("token");
 
     if (!participantId || !token) {
-      return jsonError("Participante nao encontrado neste dispositivo.", 401);
+      return jsonError("Participante não encontrado neste dispositivo.", 401);
     }
 
     const supabase = getSupabaseAdmin();
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (participantResult.error || !participantResult.data) {
-      return jsonError("Sessao do participante invalida.", 401);
+      return jsonError("Sessão do participante inválida.", 401);
     }
 
     const predictionsResult = await supabase

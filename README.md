@@ -1,15 +1,16 @@
-# Bolao da Turma 101
+# Bolão da Turma 101
 
-Site funcional para o Bolao da Turma 101 com inscricao, chave Pix, palpites, classificacao e painel administrativo para confirmar pagamentos.
+Site funcional para o Bolão da Turma 101 com inscrição, chave Pix, palpites, classificação e painel administrativo para confirmar pagamentos.
 
 ## O que foi incluido
 
-- Inscricao com nome e e-mail.
-- Aviso e copia da chave Pix: `(86) 99910-3642`.
-- Palpites dos 3 jogos: Brasil x Marrocos, Brasil x Haiti e Brasil x Escocia.
-- Regra de pontuacao: placar exato = 3 pontos, vencedor/empate = 1 ponto, erro = 0 ponto.
-- Participante so pontua e concorre se o Pix estiver confirmado.
-- Painel `/admin` para confirmar Pix, travar jogos e lancar placar final.
+- Inscrição com nome e e-mail.
+- Aviso e cópia da chave Pix: `(86) 99910-3642`.
+- Palpites dos 3 jogos: Brasil x Marrocos, Brasil x Haiti e Brasil x Escócia.
+- Regra de pontuação: placar exato = 3 pontos, vencedor/empate = 1 ponto, erro = 0 ponto.
+- Participante só pontua e concorre se o Pix estiver confirmado.
+- Página pública em fluxo bloqueado: primeiro nome/e-mail, depois regras, palpites e classificação.
+- Painel `/admin` para confirmar Pix, travar jogos e lançar placar final.
 - SQL pronto para Supabase.
 
 ## Configurar o Supabase
@@ -24,7 +25,7 @@ As tabelas usam RLS ativado e o app acessa o banco apenas pelas rotas server-sid
 
 ## Variaveis de ambiente
 
-Crie um `.env.local` para desenvolvimento e configure as mesmas variaveis na Vercel:
+Crie um `.env.local` para desenvolvimento e configure as mesmas variáveis na Vercel:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
@@ -36,23 +37,32 @@ ADMIN_PASSWORD=uma-senha-com-pelo-menos-8-caracteres
 
 ```bash
 npm install
-npm run dev
+npm start
 ```
 
-Abra `http://localhost:3000`.
+Abra `http://localhost:3001`.
+
+Neste projeto, `npm start` roda o Next.js em modo desenvolvimento para atualizar a página quando você salvar mudanças, parecido com projetos Create React App como o Vector Tracker.
+
+Para testar a build de produção localmente:
+
+```bash
+npm run build
+npm run preview
+```
 
 ## Deploy na Vercel
 
 1. Suba este projeto para um repositorio Git.
 2. Importe o repositorio na Vercel.
-3. Adicione as variaveis de ambiente acima em Project Settings > Environment Variables.
-4. Faca o deploy.
+3. Adicione as variáveis de ambiente acima em Project Settings > Environment Variables.
+4. Faça o deploy.
 
-## Operacao do bolao
+## Operação do bolão
 
 1. O participante se inscreve e salva os palpites.
-2. A organizacao confere o Pix recebido.
+2. A organização confere o Pix recebido.
 3. Em `/admin`, marque o participante como `Confirmado`.
 4. Antes do jogo, mude o status do jogo para `Travado`.
 5. Depois do jogo, mude para `Finalizado` e informe o placar oficial.
-6. A classificacao e os vencedores por rodada sao recalculados automaticamente.
+6. A classificação e os vencedores por rodada são recalculados automaticamente.

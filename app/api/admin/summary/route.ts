@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_COOKIE, verifyAdminToken } from "@/lib/admin-auth";
 import { handleApiError, jsonError } from "@/lib/api";
-import { buildLeaderboard, buildPrizeWinners } from "@/lib/scoring";
+import { buildLeaderboard, buildPrizeWinners, mergeParticipantsByEmail } from "@/lib/scoring";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { MatchRecord, ParticipantRecord, PredictionRecord } from "@/lib/types";
 
 export async function GET(request: NextRequest) {
   if (!verifyAdminToken(request.cookies.get(ADMIN_COOKIE)?.value)) {
-    return jsonError("Acesso administrativo necessario.", 401);
+    return jsonError("Acesso administrativo necessário.", 401);
   }
 
   try {
@@ -27,19 +27,22 @@ export async function GET(request: NextRequest) {
 
     const matches = (matchesResult.data || []) as MatchRecord[];
     const participants = (participantsResult.data || []) as ParticipantRecord[];
+    const visibleParticipants = mergeParticipantsByEmail(participants);
     const predictions = (predictionsResult.data || []) as PredictionRecord[];
 
     return NextResponse.json({
       matches,
-      participants,
+      participants: visibleParticipants,
       predictions,
       leaderboard: buildLeaderboard(participants, predictions, matches),
       prizeWinners: buildPrizeWinners(participants, predictions, matches),
       stats: {
-        participants: participants.length,
-        confirmed: participants.filter((participant) => participant.pix_status === "confirmed")
+        participants: visibleParticipants.length,
+        confirmed: visibleParticipants.filter(
+          (participant) => participant.pix_status === "confirmed"
+        ).length,
+        pending: visibleParticipants.filter((participant) => participant.pix_status === "pending")
           .length,
-        pending: participants.filter((participant) => participant.pix_status === "pending").length,
         predictions: predictions.length
       }
     });
