@@ -383,7 +383,7 @@ export default function HomePage() {
 
                 <button className="danger-button" onClick={leaveParticipant} type="button">
                   <LogOut size={17} />
-                  Sair deste dispositivo
+                  Sair
                 </button>
               </div>
             ) : (
