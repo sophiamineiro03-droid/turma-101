@@ -14,7 +14,6 @@ import {
   ShieldCheck,
   Sparkles,
   Trophy,
-  UserPlus,
   Users
 } from "lucide-react";
 import type { BootstrapPayload, MatchRecord, PixStatus, PredictionRecord } from "@/lib/types";
@@ -98,6 +97,9 @@ export default function HomePage() {
   const [myPredictions, setMyPredictions] = useState<Record<number, PredictionRecord>>({});
   const [drafts, setDrafts] = useState<DraftMap>({});
   const [signupForm, setSignupForm] = useState({ name: "", email: "" });
+  const [loginEmail, setLoginEmail] = useState("");
+  const [authMode, setAuthMode] = useState<"signup" | "login">("signup");
+  const [signupScores, setSignupScores] = useState<Record<number, { homeScore: string; awayScore: string }>>({});
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState("");
@@ -197,10 +199,54 @@ export default function HomePage() {
       setParticipant(payload.participant);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(payload.participant));
       setSignupForm({ name: "", email: "" });
+      // salva palpites enviados junto com a inscrição
+      const matches = data?.matches || [];
+      for (const match of matches) {
+        const s = signupScores[match.id];
+        if (s && s.homeScore !== "" && s.awayScore !== "") {
+          await fetch("/api/predictions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              participantId: payload.participant.id,
+              token: payload.participant.accessToken,
+              matchId: match.id,
+              homeScore: Number(s.homeScore),
+              awayScore: Number(s.awayScore)
+            })
+          });
+        }
+      }
+      setSignupScores({});
       await refreshEverything(payload.participant);
-      showToast("Entrada registrada. Agora você já pode ver as regras e salvar palpites.");
+      showToast("Inscrição feita! Palpites salvos. Agora faça o Pix para concorrer.");
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : "Não foi possível inscrever.";
+      setError(message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      const payload = await readJsonResponse<{ participant: ParticipantSession }>(
+        await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: loginEmail })
+        })
+      );
+      setParticipant(payload.participant);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload.participant));
+      setLoginEmail("");
+      await refreshEverything(payload.participant);
+      showToast(`Bem-vindo de volta, ${payload.participant.name}!`);
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : "Não foi possível entrar.";
       setError(message);
     } finally {
       setBusy(false);
@@ -288,7 +334,7 @@ export default function HomePage() {
               <span className="brand-ball">
                 <Trophy size={20} />
               </span>
-              <span>Bolão da Turma 101</span>
+              <span>MED-UFPI</span>
             </div>
             <a className="admin-link" href="/admin">
               <ShieldCheck size={16} />
@@ -298,13 +344,12 @@ export default function HomePage() {
 
           <div className="hero-copy">
             <div className="eyebrow">
-              <Sparkles size={16} />
-              Copa da Turma 101
+              ⚽
+              Copa do Mundo 2026
             </div>
             <h1>Bolão da Turma 101</h1>
             <p>
-              Entre no bolão, confira as regras, registre seus palpites dos jogos do Brasil e
-              acompanhe a classificação em uma página só.
+              Faça seus palpites, acumule pontos e dispute o prêmio!
             </p>
             <div className="hero-meta">
               <span className="meta-pill">
@@ -334,24 +379,27 @@ export default function HomePage() {
         )}
 
         <section className={`workspace-grid ${participant ? "" : "auth-only"}`} id="inscricao">
-          <div className="panel">
-            <div className="panel-header">
-              <div>
-                <p className="section-kicker">Primeiro passo</p>
-                <h2 className="section-title">
-                  {participant ? "Sua inscrição" : "Entrada no bolão"}
-                </h2>
-                <p className="section-subtitle">
-                  Preencha seus dados e faça o Pix para participar.
-                </p>
-              </div>
-              {participant && (
+          <div className={participant ? "panel" : "panel entry-panel"}>
+            {participant ? (
+              <div className="panel-header">
+                <div>
+                  <p className="section-kicker">Primeiro passo</p>
+                  <h2 className="section-title">Sua inscrição</h2>
+                  <p className="section-subtitle">
+                    Preencha seus dados e faça o Pix para participar.
+                  </p>
+                </div>
                 <span className={`status-pill ${pixClass(participant.pixStatus)}`}>
                   <ShieldCheck size={14} />
                   {pixLabel(participant.pixStatus)}
                 </span>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="entry-header">
+                <h2>Participe do bolão!</h2>
+                <p>Preencha seus dados para entrar na disputa da Turma 101</p>
+              </div>
+            )}
 
             {participant ? (
               <div className="form-grid">
@@ -386,64 +434,131 @@ export default function HomePage() {
                 </button>
               </div>
             ) : (
-              <form className="form-grid" onSubmit={handleSignup}>
-                <div className="field">
-                  <label htmlFor="name">Nome completo</label>
-                  <input
-                    autoComplete="name"
-                    id="name"
-                    onChange={(event) =>
-                      setSignupForm((current) => ({ ...current, name: event.target.value }))
-                    }
-                    placeholder="Ex: João da Silva"
-                    required
-                    value={signupForm.name}
-                  />
-                </div>
-                <div className="field">
-                  <label htmlFor="email">E-mail</label>
-                  <input
-                    autoComplete="email"
-                    id="email"
-                    onChange={(event) =>
-                      setSignupForm((current) => ({ ...current, email: event.target.value }))
-                    }
-                    placeholder="voce@email.com"
-                    required
-                    type="email"
-                    value={signupForm.email}
-                  />
+              <>
+                <div className="auth-toggle">
+                  <button
+                    className={authMode === "signup" ? "auth-tab active" : "auth-tab"}
+                    onClick={() => { setAuthMode("signup"); setError(""); }}
+                    type="button"
+                  >
+                    Inscrever
+                  </button>
+                  <button
+                    className={authMode === "login" ? "auth-tab active" : "auth-tab"}
+                    onClick={() => { setAuthMode("login"); setError(""); }}
+                    type="button"
+                  >
+                    Entrar
+                  </button>
                 </div>
 
-                <div className="pix-card">
-                  <div className="pix-topline">
-                    <div>
-                      <p className="section-kicker">Pagamento obrigatório</p>
-                      <div className="pix-key">{PIX_KEY}</div>
+                {authMode === "login" ? (
+                  <form className="form-grid entry-form" onSubmit={handleLogin}>
+                    <div className="field">
+                      <label htmlFor="login-email">Seu e-mail</label>
+                      <input
+                        autoComplete="email"
+                        id="login-email"
+                        onChange={(e) => setLoginEmail(e.target.value)}
+                        placeholder="Ex: joao@email.com"
+                        required
+                        type="email"
+                        value={loginEmail}
+                      />
                     </div>
-                    <button
-                      className="icon-button"
-                      onClick={() => copyText(PIX_KEY, "Chave Pix copiada.")}
-                      title="Copiar Pix"
-                      type="button"
-                    >
-                      <Clipboard size={18} />
+                    <button className="primary-button entry-submit" disabled={busy} type="submit">
+                      <LogOut size={19} />
+                      Entrar
                     </button>
-                  </div>
-                  <div className="notice">
-                    <AlertCircle size={18} />
-                    <span>
-                      Somente concorre quem fez o Pix e teve a inscrição confirmada pela
-                      organização.
-                    </span>
-                  </div>
-                </div>
+                  </form>
+                ) : (
+                  <form className="form-grid entry-form" onSubmit={handleSignup}>
+                    <div className="field">
+                      <label htmlFor="name">Seu nome completo</label>
+                      <input
+                        autoComplete="name"
+                        id="name"
+                        onChange={(event) =>
+                          setSignupForm((current) => ({ ...current, name: event.target.value }))
+                        }
+                        placeholder="Ex: João da Silva"
+                        required
+                        value={signupForm.name}
+                      />
+                    </div>
+                    <div className="field">
+                      <label htmlFor="email">Seu e-mail</label>
+                      <input
+                        autoComplete="email"
+                        id="email"
+                        onChange={(event) =>
+                          setSignupForm((current) => ({ ...current, email: event.target.value }))
+                        }
+                        placeholder="Ex: joao@email.com"
+                        required
+                        type="email"
+                        value={signupForm.email}
+                      />
+                    </div>
 
-                <button className="primary-button" disabled={busy} type="submit">
-                  <UserPlus size={18} />
-                  Entrar no bolão
-                </button>
-              </form>
+                    <div className="entry-pix-card">
+                      <div className="entry-pix-icon" aria-hidden="true">💸</div>
+                      <div className="entry-pix-content">
+                        <strong>Pagamento via Pix</strong>
+                        <div className="pix-key">{PIX_KEY}</div>
+                        <p><span aria-hidden="true">⚠️</span> Apenas quem realizar o Pix estará confirmado no bolão!</p>
+                      </div>
+                    </div>
+
+                    {(data?.matches || []).filter(m => m.status === "open").length > 0 && (
+                      <div className="signup-predictions">
+                        <p className="section-kicker">Seus palpites</p>
+                        {(data?.matches || []).filter(m => m.status === "open").map((match) => {
+                          const s = signupScores[match.id] || { homeScore: "", awayScore: "" };
+                          return (
+                            <div className="signup-prediction-row" key={match.id}>
+                              <div className="signup-match-label">
+                                <Flag value={match.home_flag} label={match.home_team} />
+                                <span className="signup-team-name">{match.home_team}</span>
+                              </div>
+                              <div className="signup-score-inputs">
+                                <input
+                                  className="score-input"
+                                  inputMode="numeric"
+                                  min={0} max={20}
+                                  onChange={(e) => setSignupScores(cur => ({ ...cur, [match.id]: { ...s, homeScore: e.target.value } }))}
+                                  placeholder="-"
+                                  type="number"
+                                  value={s.homeScore}
+                                />
+                                <span>x</span>
+                                <input
+                                  className="score-input"
+                                  inputMode="numeric"
+                                  min={0} max={20}
+                                  onChange={(e) => setSignupScores(cur => ({ ...cur, [match.id]: { ...s, awayScore: e.target.value } }))}
+                                  placeholder="-"
+                                  type="number"
+                                  value={s.awayScore}
+                                />
+                              </div>
+                              <div className="signup-match-label signup-match-right">
+                                <span className="signup-team-name">{match.away_team}</span>
+                                <Flag value={match.away_flag} label={match.away_team} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    <button className="primary-button entry-submit" disabled={busy} type="submit">
+                      <CheckCircle2 size={19} />
+                      Confirmar inscrição
+                    </button>
+                  </form>
+                )}
+              </>
             )}
           </div>
 
@@ -479,31 +594,29 @@ export default function HomePage() {
             <section className="panel" id="regras">
               <div className="panel-header">
                 <div>
-                  <p className="section-kicker">Regulamento</p>
-                  <h2 className="section-title">Regras do Bolão da Turma 101</h2>
+                  <p className="section-kicker">Regras</p>
+                  <h2 className="section-title">Como funciona</h2>
                   <p className="section-subtitle">
-                    Como a pontuação funciona no bolão.
+                    A pontuação é simples para todo mundo acompanhar durante a rodada.
                   </p>
                 </div>
               </div>
 
               <div className="rules-grid">
                 <div className="rule-card">
-                  <div className="rule-number">3</div>
+                  <Medal size={22} />
                   <strong>Placar exato</strong>
-                  <span>
-                    Acertou o placar certinho do jogo do Brasil e concorre ao prêmio da rodada.
-                  </span>
+                  <p>Acertou o placar certinho? Vale 3 pontos e concorre ao prêmio da rodada.</p>
                 </div>
                 <div className="rule-card">
-                  <div className="rule-number">1</div>
-                  <strong>Resultado certo</strong>
-                  <span>Acertou vencedor ou empate, mas não acertou o placar exato.</span>
+                  <Trophy size={22} />
+                  <strong>Vencedor ou empate</strong>
+                  <p>Acertou apenas quem vence ou se termina empatado? Vale 1 ponto.</p>
                 </div>
                 <div className="rule-card">
-                  <div className="rule-number">0</div>
-                  <strong>Resultado errado</strong>
-                  <span>Errou quem ganhou ou se terminou empatado.</span>
+                  <AlertCircle size={22} />
+                  <strong>Errou o resultado</strong>
+                  <p>Se o resultado não bater com seu palpite, a pontuação do jogo é 0.</p>
                 </div>
               </div>
 
@@ -533,17 +646,11 @@ export default function HomePage() {
 
               {!data?.matches.length ? (
                 <div className="empty-state">
-                  <Clock3 size={24} />
-                  <strong>Nenhum jogo cadastrado ainda.</strong>
+                  <Trophy size={24} />
+                  <strong>Nenhum jogo cadastrado.</strong>
                 </div>
               ) : (
                 <>
-                <div className="notice block-notice" style={{ marginBottom: 16 }}>
-                  <AlertCircle size={18} />
-                  <span>
-                    ⚠️ Clique em <strong>Salvar palpite</strong> em cada jogo. Salvar um não salva os outros!
-                  </span>
-                </div>
                 <div className="matches-grid">
                   {data.matches.map((match) => {
                     const draft = drafts[match.id] || { homeScore: "", awayScore: "" };
@@ -553,30 +660,32 @@ export default function HomePage() {
                     return (
                       <article className="match-card" key={match.id}>
                         <div className="match-head">
-                          <div className="match-round">
-                            <Trophy size={14} />
+                          <span>
+                            <Trophy size={15} />
                             {match.round_label} · {match.group_label}
-                          </div>
-                          <span className={`status-pill status-${match.status}`}>
-                            {matchStatusIcon(match.status)}
-                            {matchStatusLabel(match.status)}
+                          </span>
+                          <span className={`status-pill ${isClosed ? "status-pending" : "status-confirmed"}`}>
+                            <Clock3 size={14} />
+                            {isClosed ? "Palpites travados" : "Aberto para palpites"}
                           </span>
                         </div>
+
                         <div className="match-body">
                           <div className="scoreboard">
                             <div className="team">
                               <Flag value={match.home_flag} label={match.home_team} />
                               <div className="team-name">{match.home_team}</div>
                             </div>
+
                             <div className="score-entry">
-                              <div className="score-label">Seu palpite</div>
+                              <span>Seu palpite</span>
                               <div className="score-fields">
                                 <input
+                                  aria-label={`Gols de ${match.home_team}`}
                                   className="score-input"
-                                  disabled={isClosed}
+                                  disabled={isClosed || busy}
                                   inputMode="numeric"
-                                  min={0}
-                                  max={20}
+                                  min="0"
                                   onChange={(event) =>
                                     updateDraft(match.id, "homeScore", event.target.value)
                                   }
@@ -584,13 +693,13 @@ export default function HomePage() {
                                   type="number"
                                   value={draft.homeScore}
                                 />
-                                <span className="score-separator">x</span>
+                                <strong>x</strong>
                                 <input
+                                  aria-label={`Gols de ${match.away_team}`}
                                   className="score-input"
-                                  disabled={isClosed}
+                                  disabled={isClosed || busy}
                                   inputMode="numeric"
-                                  min={0}
-                                  max={20}
+                                  min="0"
                                   onChange={(event) =>
                                     updateDraft(match.id, "awayScore", event.target.value)
                                   }
@@ -600,6 +709,7 @@ export default function HomePage() {
                                 />
                               </div>
                             </div>
+
                             <div className="team">
                               <Flag value={match.away_flag} label={match.away_team} />
                               <div className="team-name">{match.away_team}</div>
@@ -715,6 +825,14 @@ export default function HomePage() {
           </>
         )}
       </main>
+
+      <footer className="site-footer">
+        <strong>Bolão da Turma 101</strong>
+        <span>·</span>
+        <span>Copa 2026</span>
+        <span>·</span>
+        <span aria-label="Corações verde e amarelo">💚💛</span>
+      </footer>
 
       {toast && <div className="toast">{toast}</div>}
     </div>
