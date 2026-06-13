@@ -351,19 +351,6 @@ export default function HomePage() {
             <p>
               Faça seus palpites, acumule pontos e dispute o prêmio!
             </p>
-            <div className="hero-meta">
-              <span className="meta-pill">
-                <Coins size={16} />
-                Pix: {PIX_KEY}
-              </span>
-              <span className="meta-pill">
-                <Medal size={16} />3 pontos no placar exato
-              </span>
-              <span className="meta-pill">
-                <Users size={16} />
-                {confirmedCount} confirmado{confirmedCount === 1 ? "" : "s"}
-              </span>
-            </div>
           </div>
         </div>
       </header>
@@ -415,16 +402,18 @@ export default function HomePage() {
                   <div className="pix-topline">
                     <div>
                       <p className="section-kicker">Pagamento obrigatório</p>
-                      <div className="pix-key">{PIX_KEY}</div>
+                      <div className="pix-key-row">
+                        <span className="pix-key">{PIX_KEY}</span>
+                        <button
+                          className="icon-button pix-copy-button"
+                          onClick={() => copyText(PIX_KEY, "Chave Pix copiada.")}
+                          title="Copiar Pix"
+                          type="button"
+                        >
+                          <Clipboard size={18} />
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      className="icon-button"
-                      onClick={() => copyText(PIX_KEY, "Chave Pix copiada.")}
-                      title="Copiar Pix"
-                      type="button"
-                    >
-                      <Clipboard size={18} />
-                    </button>
                   </div>
                 </div>
 
@@ -543,8 +532,8 @@ export default function HomePage() {
                                 />
                               </div>
                               <div className="signup-match-label signup-match-right">
-                                <span className="signup-team-name">{match.away_team}</span>
                                 <Flag value={match.away_flag} label={match.away_team} />
+                                <span className="signup-team-name">{match.away_team}</span>
                               </div>
                             </div>
                           );
