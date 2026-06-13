@@ -401,7 +401,7 @@ export default function HomePage() {
                 <div className="pix-card">
                   <div className="pix-topline">
                     <div>
-                      <p className="section-kicker">Pagamento obrigatório</p>
+                      <p className="section-kicker">Pagamento obrigatório · R$ 5,00</p>
                       <div className="pix-key-row">
                         <span className="pix-key">{PIX_KEY}</span>
                         <button
@@ -493,7 +493,7 @@ export default function HomePage() {
                     <div className="entry-pix-card">
                       <div className="entry-pix-icon" aria-hidden="true">💸</div>
                       <div className="entry-pix-content">
-                        <strong>Pagamento via Pix</strong>
+                        <strong>Pagamento via Pix · R$ 5,00</strong>
                         <div className="pix-key">{PIX_KEY}</div>
                         <p><span aria-hidden="true">⚠️</span> Apenas quem realizar o Pix estará confirmado no bolão!</p>
                       </div>
