@@ -241,7 +241,7 @@ export default function AdminPage() {
           <div className="admin-actions">
             <a className="ghost-link" href="/">
               <Home size={16} />
-              Site
+              Home
             </a>
             {authenticated && (
               <button className="ghost-link" onClick={logout} type="button">
