@@ -944,8 +944,29 @@ td {
   align-items: flex-end;
 }
 
+.score-pair {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
 .inline-score {
   width: 84px;
+}
+
+@media (max-width: 480px) {
+  .inline-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .score-pair {
+    flex-direction: row;
+  }
+
+  .inline-score {
+    flex: 1;
+  }
 }
 
 .toast {

@@ -438,31 +438,33 @@ export default function AdminPage() {
                               <option value="finished">Finalizado</option>
                             </select>
                           </div>
-                          <div className="field inline-score">
-                            <label htmlFor={`home-${match.id}`}>{match.home_team}</label>
-                            <input
-                              id={`home-${match.id}`}
-                              min={0}
-                              max={20}
-                              onChange={(event) =>
-                                updateMatchForm(match.id, "actualHomeScore", event.target.value)
-                              }
-                              type="number"
-                              value={form.actualHomeScore}
-                            />
-                          </div>
-                          <div className="field inline-score">
-                            <label htmlFor={`away-${match.id}`}>{match.away_team}</label>
-                            <input
-                              id={`away-${match.id}`}
-                              min={0}
-                              max={20}
-                              onChange={(event) =>
-                                updateMatchForm(match.id, "actualAwayScore", event.target.value)
-                              }
-                              type="number"
-                              value={form.actualAwayScore}
-                            />
+                          <div className="score-pair">
+                            <div className="field inline-score">
+                              <label htmlFor={`home-${match.id}`}>{match.home_team}</label>
+                              <input
+                                id={`home-${match.id}`}
+                                min={0}
+                                max={20}
+                                onChange={(event) =>
+                                  updateMatchForm(match.id, "actualHomeScore", event.target.value)
+                                }
+                                type="number"
+                                value={form.actualHomeScore}
+                              />
+                            </div>
+                            <div className="field inline-score">
+                              <label htmlFor={`away-${match.id}`}>{match.away_team}</label>
+                              <input
+                                id={`away-${match.id}`}
+                                min={0}
+                                max={20}
+                                onChange={(event) =>
+                                  updateMatchForm(match.id, "actualAwayScore", event.target.value)
+                                }
+                                type="number"
+                                value={form.actualAwayScore}
+                              />
+                            </div>
                           </div>
                           <button
                             className="primary-button"
