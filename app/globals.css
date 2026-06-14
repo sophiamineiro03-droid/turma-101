@@ -787,6 +787,7 @@ th {
 
 td {
   color: var(--ink);
+  white-space: nowrap;
 }
 
 .rank {
